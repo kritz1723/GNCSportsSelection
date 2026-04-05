@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guru Nanak College – Sports Selection 2026–27</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root { --navy:#0A2240; --gold:#C8993A; --gold-light:#F5E6C8; --cream:#FAFAF7; --border:#D4C8A8; --red:#C03030; --red-light:#FEE8E8; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cream); min-height:100vh; padding-bottom:3rem; }
+    .page { max-width:800px; margin:0 auto; padding:2rem 1.25rem 3rem; }
+
+    /* Header */
+    .header { background:var(--navy); color:white; border-radius:14px; padding:1.6rem 1.5rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:1.1rem; }
+    .logo-wrap { width:64px; height:64px; border-radius:50%; overflow:hidden; border:2px solid var(--gold); flex-shrink:0; }
+    .logo-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+    .header-text h1 { font-family:'EB Garamond',serif; font-size:1.4rem; font-weight:600; letter-spacing:0.01em; line-height:1.3; }
+    .header-text p { font-size:11.5px; color:rgba(255,255,255,0.6); margin-top:3px; letter-spacing:0.06em; }
+    .badge { display:inline-block; background:var(--gold); color:var(--navy); font-size:10px; font-weight:500; padding:2px 10px; border-radius:20px; margin-top:7px; letter-spacing:0.08em; }
+
+    /* Section cards */
+    .section-card { background:white; border:0.5px solid var(--border); border-radius:12px; margin-bottom:1rem; overflow:hidden; }
+    .section-card.has-error { border-color:var(--red); }
+    .section-head { background:var(--navy); padding:0.65rem 1rem; display:flex; align-items:center; gap:8px; }
+    .section-head span { font-family:'EB Garamond',serif; font-size:1rem; color:white; font-weight:500; }
+    .section-num { width:22px; height:22px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500; color:var(--navy); flex-shrink:0; }
+    .section-body { padding:1.1rem; }
+
+    /* Form fields */
+    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+    .field-full { grid-column:1/-1; }
+    .field { display:flex; flex-direction:column; gap:4px; }
+    label { font-size:11px; font-weight:500; color:#666; letter-spacing:0.06em; text-transform:uppercase; }
+    .req { color:var(--red); margin-left:1px; }
+    .optional-tag { font-size:10px; color:#aaa; font-weight:400; text-transform:none; margin-left:4px; letter-spacing:0; }
+    input[type=text], input[type=email], input[type=tel], input[type=date], select, textarea {
+      width:100%; padding:8px 10px; border:0.5px solid #D0C9B8; border-radius:7px;
+      font-family:'DM Sans',sans-serif; font-size:13.5px; background:var(--cream); color:#111; outline:none; transition:border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color:var(--navy); }
+    select { cursor:pointer; }
+    textarea { resize:vertical; }
+    .radio-group { display:flex; gap:10px; flex-wrap:wrap; }
+    .radio-group label { text-transform:none; font-size:13.5px; color:#333; cursor:pointer; display:flex; align-items:center; gap:5px; font-weight:400; }
+    .radio-group input[type=radio] { width:auto; accent-color:var(--navy); }
+    .other-input { display:none; margin-top:6px; }
+    .other-input.visible { display:block; }
+    .err-msg { font-size:11px; color:var(--red); margin-top:3px; display:none; }
+    .field-error input, .field-error select, .field-error textarea { border-color:var(--red) !important; background:#fff8f8 !important; }
+    .field-error .radio-group { outline:1.5px solid var(--red); border-radius:7px; padding:4px 8px; }
+    .field-error .err-msg { display:block; }
+
+    /* ── Achievement rows ── */
+    .ach-list { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+
+    .ach-row {
+      border:0.5px solid var(--border); border-radius:10px;
+      background:white; overflow:hidden; transition:border-color 0.2s;
+    }
+    .ach-row.row-error { border-color:var(--red); background:#fff8f8; }
+
+    /* top strip: number + dropdowns + delete */
+    .ach-top {
+      display:grid;
+      grid-template-columns: 28px 1fr 1fr 88px 80px 32px;
+      gap:8px; align-items:center;
+      padding:8px 10px;
+      border-bottom:0.5px solid var(--border);
+      background:#FAFAF7;
+    }
+    .ach-num { width:24px; height:24px; background:var(--gold-light); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:500; color:var(--navy); flex-shrink:0; }
+    .ach-top select { padding:5px 8px; font-size:12.5px; border-radius:6px; }
+    .ach-top select.cell-error { border-color:var(--red) !important; background:#fff8f8 !important; }
+
+    /* bottom strip: event name + cert upload */
+    .ach-bottom { display:flex; gap:8px; align-items:flex-start; padding:8px 10px; }
+    .ach-event { flex:1; }
+    .ach-event textarea {
+      font-size:12.5px; padding:6px 9px; min-height:56px; line-height:1.45;
+      border-radius:6px; background:white;
+    }
+    .ach-event textarea.cell-error { border-color:var(--red) !important; background:#fff8f8 !important; }
+    .ach-cert { flex-shrink:0; width:130px; }
+    .cert-btn {
+      display:inline-flex; align-items:center; gap:5px; padding:5px 9px;
+      border:0.5px dashed var(--gold); border-radius:6px;
+      background:var(--gold-light); color:var(--navy);
+      font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500;
+      cursor:pointer; white-space:nowrap; position:relative; width:100%; justify-content:center;
+    }
+    .cert-btn input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+    .cert-btn svg { width:11px; height:11px; flex-shrink:0; }
+    .cert-chips { display:flex; flex-direction:column; gap:3px; margin-top:5px; }
+    .cert-chip { display:flex; align-items:center; gap:4px; background:white; border:0.5px solid #D0C9B8; border-radius:4px; padding:2px 6px; }
+    .cert-chip-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; color:#333; font-size:10.5px; }
+    .cert-chip-rm { background:none; border:none; cursor:pointer; color:#bbb; font-size:13px; line-height:1; padding:0 1px; flex-shrink:0; }
+    .cert-chip-rm:hover { color:var(--red); }
+
+    /* standing-other inside top strip */
+    .standing-wrap { display:flex; flex-direction:column; gap:4px; }
+    .standing-other-inp { display:none; padding:4px 7px !important; font-size:12px !important; }
+    .standing-other-inp.show { display:block; }
+
+    /* remove button */
+    .rm-row { background:none; border:none; cursor:pointer; color:#ccc; font-size:20px; line-height:1; padding:2px; border-radius:5px; display:flex; align-items:center; justify-content:center; }
+    .rm-row:hover { background:#fee; color:var(--red); }
+
+    /* col labels inside top strip */
+    .col-lbl { font-size:9.5px; font-weight:500; color:#999; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:2px; }
+
+    /* add row btn */
+    .add-row-btn { display:flex; align-items:center; gap:7px; padding:9px 14px; border:0.5px dashed var(--gold); border-radius:8px; background:var(--gold-light); color:var(--navy); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; transition:background 0.2s; }
+    .add-row-btn:hover { background:#EDD9A3; }
+    .add-row-btn svg { width:14px; height:14px; }
+
+    /* Validation / submit */
+    .val-banner { display:none; background:var(--red-light); border:0.5px solid var(--red); border-radius:10px; padding:0.9rem 1rem; margin-top:1rem; }
+    .val-banner p { font-size:13px; color:var(--red); font-weight:500; margin-bottom:4px; }
+    .val-banner ul { padding-left:1.2rem; }
+    .val-banner li { font-size:12.5px; color:#a02020; margin-top:3px; }
+    .submit-btn { width:100%; padding:14px; background:var(--navy); color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; margin-top:1rem; letter-spacing:0.02em; transition:background 0.2s,opacity 0.2s; }
+    .submit-btn:hover:not(:disabled) { background:#0e2e55; }
+    .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .progress-bar { height:4px; background:#e0d8c8; border-radius:2px; margin-top:10px; overflow:hidden; display:none; }
+    .progress-fill { height:100%; background:var(--gold); border-radius:2px; width:0%; transition:width 0.4s ease; }
+    .games-loading { font-size:12px; color:#888; font-style:italic; padding:8px 0; }
+    .success-banner { display:none; background:#EAF7EE; border:0.5px solid #7CC99A; border-radius:12px; padding:1.5rem; text-align:center; margin-top:1rem; color:#1B6B3A; }
+    .success-banner h2 { font-family:'EB Garamond',serif; font-size:1.5rem; margin-bottom:6px; }
+    .success-banner p { font-size:13.5px; color:#2a6b42; }
+    .success-id { font-size:11px; font-weight:500; background:#D6F0E0; color:#1B6B3A; padding:4px 12px; border-radius:20px; display:inline-block; margin-top:10px; letter-spacing:0.05em; }
+    .error-banner { display:none; background:#FEE8E8; border:0.5px solid #F09595; border-radius:10px; padding:1rem; text-align:center; margin-top:1rem; color:#A32D2D; font-size:13.5px; }
+
+    @media(max-width:600px) {
+      .field-grid { grid-template-columns:1fr; }
+      .header { flex-direction:column; align-items:flex-start; gap:.75rem; }
+      .ach-top { grid-template-columns:28px 1fr 1fr; grid-template-rows:auto auto; }
+      .ach-top .rm-wrap { grid-column:3; grid-row:1; justify-self:end; }
+      .ach-bottom { flex-direction:column; }
+      .ach-cert { width:100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="logo-wrap"><img src="data:image/jpeg;base64,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" alt="GNC Logo" /></div>
+    <div class="header-text">
+      <h1>Guru Nanak College Sports Selection</h1>
+      <p>DEPARTMENT OF PHYSICAL EDUCATION · VELACHERY, CHENNAI</p>
+      <span class="badge">2026 – 2027</span>
+    </div>
+  </div>
+
+  <form id="mainForm" novalidate>
+
+    <!-- Section 1: Personal -->
+    <div class="section-card" id="card-personal">
+      <div class="section-head"><div class="section-num">1</div><span>Personal Information</span></div>
+      <div class="section-body">
+        <div class="field-grid">
+          <div class="field field-full" id="f-name">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="name" placeholder="Enter your full name" />
+            <span class="err-msg">Full name is required.</span>
+          </div>
+          <div class="field" id="f-dob">
+            <label>Date of Birth <span class="req">*</span></label>
+            <input type="date" id="dob" />
+            <span class="err-msg">Date of birth is required.</span>
+          </div>
+          <div class="field" id="f-gender">
+            <label>Gender <span class="req">*</span></label>
+            <div class="radio-group" id="genderGroup">
+              <label><input type="radio" name="gender" value="Male" /> Male</label>
+              <label><input type="radio" name="gender" value="Female" /> Female</label>
+              <label><input type="radio" name="gender" value="Others" /> Others</label>
+            </div>
+            <input type="text" id="genderOther" class="other-input" placeholder="Please specify…" />
+            <span class="err-msg">Please select a gender.</span>
+          </div>
+          <div class="field" id="f-contact">
+            <label>Contact Number <span class="req">*</span></label>
+            <input type="tel" id="contact" placeholder="10-digit mobile number" maxlength="10" />
+            <span class="err-msg">Enter a valid 10-digit number.</span>
+          </div>
+          <div class="field" id="f-email">
+            <label>Email ID <span class="req">*</span></label>
+            <input type="email" id="email" placeholder="your@email.com" />
+            <span class="err-msg">Enter a valid email address.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Academic -->
+    <div class="section-card" id="card-academic">
+      <div class="section-head"><div class="section-num">2</div><span>Academic Details</span></div>
+      <div class="section-body">
+        <div class="field-grid">
+          <div class="field" id="f-school">
+            <label>School / Institution <span class="req">*</span></label>
+            <input type="text" id="school" placeholder="School or college name" />
+            <span class="err-msg">School name is required.</span>
+          </div>
+          <div class="field" id="f-board">
+            <label>Board of Studies <span class="req">*</span></label>
+            <select id="board" onchange="toggleOther('boardOther',this.value==='Others')">
+              <option value="">— Select Board —</option>
+              <option>Matriculation</option><option>CBSE</option><option>ICSE</option><option>Others</option>
+            </select>
+            <input type="text" id="boardOther" class="other-input" placeholder="Specify board name…" />
+            <span class="err-msg">Please select a board of studies.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Game -->
+    <div class="section-card" id="card-game">
+      <div class="section-head"><div class="section-num">3</div><span>Game / Sport</span></div>
+      <div class="section-body">
+        <div class="field-grid">
+          <div class="field field-full" id="f-game">
+            <label>Select Your Game <span class="req">*</span></label>
+            <div class="games-loading" id="gamesLoading">Fetching sports list via AI…</div>
+            <select id="gameSelect" style="display:none" onchange="toggleOther('gameOther',this.value==='Other (specify)')">
+              <option value="">— Select Game —</option>
+            </select>
+            <input type="text" id="gameOther" class="other-input" placeholder="Enter your sport / game…" />
+            <span class="err-msg">Please select or specify your game.</span>
+          </div>
+          <div class="field">
+            <label>Level <span class="optional-tag">(optional)</span></label>
+            <select id="gameLevel">
+              <option value="">— Select Level —</option>
+              <option>National</option><option>International</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Ranking <span class="optional-tag">(optional)</span></label>
+            <input type="text" id="gameRanking" placeholder="e.g. 3rd in India, World #12…" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Achievements -->
+    <div class="section-card" id="card-achievements">
+      <div class="section-head"><div class="section-num">4</div><span>Sports Achievements &amp; Certificates</span></div>
+      <div class="section-body" style="padding:0.8rem 1rem 1rem;">
+        <div class="ach-list" id="achList"></div>
+        <button type="button" class="add-row-btn" onclick="addRow()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Achievement
+        </button>
+      </div>
+    </div>
+
+    <div class="val-banner" id="valBanner">
+      <p>Please fix the following before submitting:</p>
+      <ul id="valList"></ul>
+    </div>
+
+    <button type="button" class="submit-btn" id="submitBtn" onclick="handleSubmit()">Submit Application</button>
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+  </form>
+
+  <div class="success-banner" id="successBanner">
+    <h2>Application Submitted!</h2>
+    <p>Your sports selection form has been received successfully.<br/>The Department of Physical Education will contact you regarding trials.</p>
+    <div class="success-id" id="successId"></div>
+  </div>
+  <div class="error-banner" id="errorBanner">Submission failed. Please check your connection and try again.</div>
+
+</div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCYh9pxMthHwJkM-WbxF1GQUcFJS38AcpCrE9sta02RG0jemyJUcJwRd-UYXeMaAZCXQ/exec";
+
+  const REPRESENTATIONS = [
+    "School Representation","Zonal","District","State",
+    "State - RDS","State - BDS","Khelo India","National","International"
+  ];
+
+  let rowCount = 0;
+  const fileStore = {};
+
+  // ── Others toggle ─────────────────────────────────────────────
+  function toggleOther(id, show) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('visible', !!show);
+    if (!show) el.value = '';
+  }
+  document.querySelectorAll('input[name=gender]').forEach(r =>
+    r.addEventListener('change', () => toggleOther('genderOther', r.value==='Others' && r.checked))
+  );
+
+  // ── Field error helpers ───────────────────────────────────────
+  function setErr(id, show) { const el=document.getElementById(id); if(el) el.classList.toggle('field-error',show); }
+  ['name','dob','contact','email','school'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', ()=>setErr('f-'+id,false));
+  });
+  document.getElementById('board')?.addEventListener('change', ()=>setErr('f-board',false));
+  document.getElementById('gameSelect')?.addEventListener('change', ()=>setErr('f-game',false));
+  document.querySelectorAll('input[name=gender]').forEach(r=>r.addEventListener('change',()=>setErr('f-gender',false)));
+
+  // ── File helpers ──────────────────────────────────────────────
+  function fileToBase64(f) {
+    return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});
+  }
+  function formatSize(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
+  function renderChips(id) {
+    const wrap=document.getElementById('chips-'+id); if(!wrap) return; wrap.innerHTML='';
+    (fileStore[id]||[]).forEach((f,i)=>{
+      const c=document.createElement('div'); c.className='cert-chip';
+      c.innerHTML=`<span class="cert-chip-name" title="${f.name}">${f.name}</span><button type="button" class="cert-chip-rm" onclick="removeFile(${id},${i})">×</button>`;
+      wrap.appendChild(c);
+    });
+  }
+  function removeFile(id,i){if(fileStore[id]){fileStore[id].splice(i,1);renderChips(id);}}
+  function handleFile(id,input){
+    if(!fileStore[id]) fileStore[id]=[];
+    Array.from(input.files).forEach(f=>{if(!fileStore[id].some(e=>e.name===f.name&&e.size===f.size)) fileStore[id].push(f);});
+    input.value=''; renderChips(id);
+  }
+
+  // ── Build options ─────────────────────────────────────────────
+  function repOpts(){ return '<option value="">— Select —</option>'+REPRESENTATIONS.map(r=>`<option>${r}</option>`).join(''); }
+  function standOpts(){ return '<option value="">— Select —</option><option>Gold</option><option>Silver</option><option>Bronze</option><option>Participation</option><option>Others</option>'; }
+  function yearOpts(){ const cy=new Date().getFullYear(); let s='<option value="">— Year —</option>'; for(let y=cy;y>=2000;y--) s+=`<option>${y}</option>`; return s; }
+
+  // ── Renumber all rows ─────────────────────────────────────────
+  function renumber() {
+    document.querySelectorAll('#achList .ach-row').forEach((row,i)=>{
+      const badge = row.querySelector('.ach-num');
+      if(badge) badge.textContent = i+1;
+    });
+  }
+
+  // ── Add achievement row ───────────────────────────────────────
+  function addRow() {
+    rowCount++;
+    const id = rowCount;
+    fileStore[id] = [];
+
+    const div = document.createElement('div');
+    div.className = 'ach-row';
+    div.id = 'row-'+id;
+    div.innerHTML = `
+      <div class="ach-top">
+        <div class="ach-num">1</div>
+
+        <div>
+          <div class="col-lbl">Representation <span style="color:var(--red)">*</span></div>
+          <select data-field="representation" onchange="clearRowErr(this)">${repOpts()}</select>
+        </div>
+
+        <div class="standing-wrap">
+          <div class="col-lbl">Standing <span style="color:var(--red)">*</span></div>
+          <select data-field="standing" onchange="handleStanding(this,${id})">${standOpts()}</select>
+          <input type="text" class="standing-other-inp" data-field="standingOther" placeholder="Specify…" oninput="clearRowErr(this)" />
+        </div>
+
+        <div>
+          <div class="col-lbl">Year <span style="color:var(--red)">*</span></div>
+          <select data-field="year" onchange="clearRowErr(this)">${yearOpts()}</select>
+        </div>
+
+        <div>
+          <div class="col-lbl">Certificate</div>
+          <label class="cert-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C8993A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple onchange="handleFile(${id},this)" />
+          </label>
+          <div class="cert-chips" id="chips-${id}"></div>
+        </div>
+
+        <button type="button" class="rm-row" onclick="removeRow(${id})" title="Remove">×</button>
+      </div>
+
+      <div class="ach-bottom">
+        <div class="ach-event">
+          <div class="col-lbl" style="margin-bottom:3px;">Event Name &amp; Details</div>
+          <textarea data-field="eventName" placeholder="Competition / event name, venue, organiser…" rows="2" oninput="autoResize(this)"></textarea>
+        </div>
+      </div>`;
+
+    document.getElementById('achList').appendChild(div);
+    renumber();
+  }
+
+  function removeRow(id) {
+    const el = document.getElementById('row-'+id);
+    if (el) { el.remove(); delete fileStore[id]; renumber(); }
+  }
+
+  function handleStanding(sel, id) {
+    clearRowErr(sel);
+    const row = document.getElementById('row-'+id);
+    const inp = row.querySelector('[data-field="standingOther"]');
+    inp.classList.toggle('show', sel.value==='Others');
+    if(sel.value!=='Others') inp.value='';
+  }
+
+  function clearRowErr(el) {
+    el.style.borderColor=''; el.style.background='';
+    const row = el.closest('.ach-row'); if(row) row.classList.remove('row-error');
+  }
+
+  function autoResize(ta) { ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
+
+  // ── Validation ────────────────────────────────────────────────
+  function validateForm() {
+    const errors=[]; let firstEl=null;
+    function fail(fId,msg,focusId){ setErr(fId,true); errors.push(msg); if(!firstEl) firstEl=document.getElementById(focusId||fId); }
+
+    if(!document.getElementById('name').value.trim())        fail('f-name','Full name is required','name');
+    if(!document.getElementById('dob').value)                fail('f-dob','Date of birth is required','dob');
+    const gc=document.querySelector('input[name=gender]:checked');
+    if(!gc) fail('f-gender','Gender is required','genderGroup');
+    else if(gc.value==='Others'&&!document.getElementById('genderOther').value.trim()) fail('f-gender','Please specify gender','genderOther');
+    if(!/^\d{10}$/.test(document.getElementById('contact').value.trim())) fail('f-contact','Valid 10-digit contact number is required','contact');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('email').value.trim())) fail('f-email','Valid email address is required','email');
+    if(!document.getElementById('school').value.trim()) fail('f-school','School / institution name is required','school');
+    const bv=document.getElementById('board').value;
+    if(!bv) fail('f-board','Board of studies is required','board');
+    else if(bv==='Others'&&!document.getElementById('boardOther').value.trim()) fail('f-board','Please specify the board','boardOther');
+    const gv=document.getElementById('gameSelect').value;
+    if(!gv) fail('f-game','Please select a game / sport','gameSelect');
+    else if(gv==='Other (specify)'&&!document.getElementById('gameOther').value.trim()) fail('f-game','Please specify your game','gameOther');
+
+    const rows=document.querySelectorAll('#achList .ach-row');
+    if(!rows.length){ errors.push('Please add at least one achievement'); if(!firstEl) firstEl=document.getElementById('card-achievements'); }
+    rows.forEach((row,i)=>{
+      const n=i+1; let rowErr=false;
+      const mark=(field,msg)=>{ const el=row.querySelector(`[data-field="${field}"]`); if(el){el.style.borderColor='var(--red)';el.style.background='#fff8f8';} errors.push(`Achievement #${n}: ${msg}`); rowErr=true; };
+      const val=f=>{ const el=row.querySelector(`[data-field="${f}"]`); return el?el.value.trim():''; };
+      if(!val('representation')) mark('representation','Representation level is required');
+      const st=val('standing');
+      if(!st) mark('standing','Standing is required');
+      else if(st==='Others'&&!val('standingOther')) mark('standingOther','Please specify the standing');
+      if(!val('year')) mark('year','Year is required');
+      if(rowErr){ row.classList.add('row-error'); if(!firstEl) firstEl=row; }
+    });
+
+    const banner=document.getElementById('valBanner'),list=document.getElementById('valList');
+    if(errors.length){ list.innerHTML=errors.map(e=>`<li>${e}</li>`).join(''); banner.style.display='block'; if(firstEl) firstEl.scrollIntoView({behavior:'smooth',block:'center'}); }
+    else { banner.style.display='none'; list.innerHTML=''; }
+    return !errors.length;
+  }
+
+  // ── Collect ───────────────────────────────────────────────────
+  async function collectAchievements() {
+    const rows=document.querySelectorAll('#achList .ach-row'); const result=[];
+    for(const row of rows){
+      const id=parseInt(row.id.replace('row-',''));
+      const val=f=>{const el=row.querySelector(`[data-field="${f}"]`);return el?el.value.trim():'';};
+      const certs=[];
+      for(const f of (fileStore[id]||[])){try{const d=await fileToBase64(f);certs.push({name:f.name,mimeType:f.type,data:d});}catch{}}
+      const st=val('standing');
+      result.push({ representation:val('representation'), eventName:val('eventName'), standing:st==='Others'?(val('standingOther')||'Others'):st, year:val('year'), certificates:certs });
+    }
+    return result;
+  }
+
+  function setProgress(p){document.getElementById('progressFill').style.width=p+'%';}
+
+  // ── Submit ────────────────────────────────────────────────────
+  async function handleSubmit(){
+    document.querySelectorAll('#achList .ach-row').forEach(row=>{
+      row.classList.remove('row-error');
+      row.querySelectorAll('select,input,textarea').forEach(el=>{el.style.borderColor='';el.style.background='';});
+    });
+    document.querySelectorAll('.section-card').forEach(c=>c.classList.remove('has-error'));
+    if(!validateForm()) return;
+
+    const btn=document.getElementById('submitBtn'),bar=document.getElementById('progressBar');
+    bar.style.display='block';btn.disabled=true;btn.textContent='Preparing submission…';setProgress(10);
+    try{
+      btn.textContent='Encoding certificates…';setProgress(30);
+      const achievements=await collectAchievements();
+      const gv=document.querySelector('input[name=gender]:checked')?.value||'';
+      const bv=document.getElementById('board').value;
+      const gm=document.getElementById('gameSelect').value;
+      const payload={
+        name:document.getElementById('name').value.trim(),
+        dob:document.getElementById('dob').value,
+        gender:gv==='Others'?(document.getElementById('genderOther').value.trim()||'Others'):gv,
+        contact:document.getElementById('contact').value.trim(),
+        email:document.getElementById('email').value.trim(),
+        school:document.getElementById('school').value.trim(),
+        board:bv==='Others'?(document.getElementById('boardOther').value.trim()||'Others'):bv,
+        game:gm==='Other (specify)'?(document.getElementById('gameOther').value.trim()||'Other'):gm,
+        gameLevel:document.getElementById('gameLevel').value,
+        gameRanking:document.getElementById('gameRanking').value.trim(),
+        achievements
+      };
+      btn.textContent='Submitting to Google Sheets…';setProgress(65);
+      const res=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
+      const result=await res.json();setProgress(100);
+      if(result.status==='success'){
+        setTimeout(()=>{document.getElementById('mainForm').style.display='none';bar.style.display='none';document.getElementById('successId').textContent='Reference ID: '+result.id;const b=document.getElementById('successBanner');b.style.display='block';b.scrollIntoView({behavior:'smooth'});},400);
+      } else throw new Error(result.message||'Unknown');
+    }catch(err){
+      console.error(err);bar.style.display='none';btn.disabled=false;btn.textContent='Submit Application';
+      const eb=document.getElementById('errorBanner');eb.style.display='block';eb.scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+  // ── Load games ────────────────────────────────────────────────
+  async function loadGames(){
+    const FB=["Archery","Athletics","Badminton","Ball Badminton","Basketball","Boxing","Carrom","Chess","Cricket","Cycling","Discus Throw","Football","Gymnastics","Handball","High Jump","Hockey","Javelin Throw","Judo","Kabaddi","Karate","Kho-Kho","Long Jump","Rowing","Rugby","Shooting","Silambam","Softball","Squash","Swimming","Table Tennis","Taekwondo","Tennis","Triple Jump","Volleyball","Weightlifting","Wrestling","Yoga"];
+    const sel=document.getElementById('gameSelect');
+    function populate(list){
+      list.sort().forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;sel.appendChild(o);});
+      const ot=document.createElement('option');ot.value='Other (specify)';ot.textContent='Other (specify)';sel.appendChild(ot);
+      document.getElementById('gamesLoading').style.display='none';sel.style.display='block';
+    }
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,messages:[{role:"user",content:"List all major sports and games played at Indian college level — team, individual, indoor, outdoor, traditional, modern. Return ONLY a JSON array of strings, no explanation, no markdown, no backticks. At least 50 sports."}]})});
+      const data=await res.json();
+      populate(JSON.parse(data.content[0].text.trim().replace(/```json|```/g,'').trim()));
+    }catch{populate(FB);}
+  }
+
+  
+  loadGames();
+</script>
+</body>
+</html>
