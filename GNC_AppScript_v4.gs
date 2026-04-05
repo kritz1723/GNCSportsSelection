@@ -43,8 +43,15 @@ function doGet(e) {
       const raw = params.data || "";
       if (!raw) throw new Error("No data received");
 
-      const payload = JSON.parse(decodeURIComponent(raw));
-      Logger.log("submit: received for " + payload.name);
+      // Apps Script auto-decodes URL params — do NOT call decodeURIComponent again
+      let payload;
+      try {
+        payload = JSON.parse(raw);
+      } catch(parseErr) {
+        // Fallback: try decoding once in case it wasn't auto-decoded
+        payload = JSON.parse(decodeURIComponent(raw));
+      }
+      Logger.log("submit: received for " + payload.name + " | game=" + payload.game);
 
       const ss       = SpreadsheetApp.openById(SPREADSHEET_ID);
       const subSheet = ensureSheet(ss, SHEET_SUBMISSIONS,  SUBMISSION_HEADERS);
@@ -81,7 +88,8 @@ function doGet(e) {
         ]);
       });
 
-      Logger.log("submit: saved as " + submissionId);
+      Logger.log("submit: saved as " + submissionId + " | rows written=" + (1 + (payload.achievements||[]).length));
+      SpreadsheetApp.flush(); // force-commit all pending writes immediately
       result = { status: "success", id: submissionId };
 
     } catch (err) {
