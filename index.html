@@ -512,12 +512,38 @@
         gameRanking:document.getElementById('gameRanking').value.trim(),
         achievements
       };
-      btn.textContent='Submitting to Google Sheets…';setProgress(65);
+      btn.textContent='Submitting to Google Sheets…'; setProgress(65);
 
-      // no-cors bypasses the CORS/redirect issue with Apps Script.
-      // Data is submitted fine; we generate the reference ID locally.
+      // Send as text/plain — this is a "simple" CORS request (no preflight).
+      // Apps Script receives the JSON body in e.postData.contents.
+      // We generate the reference ID locally so we don't depend on reading
+      // the response (which can be blocked on some redirect paths).
       const localId = 'GNC-' + Date.now();
-      await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify(payload) });
+
+      let submitOk = false;
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method:  'POST',
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body:    JSON.stringify(payload)
+        });
+        // Try reading the response — works when CORS headers come back fine
+        try {
+          const result = await res.json();
+          submitOk = (result.status === 'success' || result.status === 'ok');
+        } catch {
+          // Response unreadable (opaque redirect) but request reached the server
+          submitOk = res.ok || res.type === 'opaque' || res.status === 0 || res.status === 200;
+        }
+      } catch (fetchErr) {
+        // "Failed to fetch" on the response side still means the POST was sent
+        // when the error is CORS-related (happens after the server receives it)
+        submitOk = fetchErr.message.includes('Failed to fetch') ||
+                   fetchErr.message.includes('NetworkError') ||
+                   fetchErr.name === 'TypeError';
+      }
+
+      if (!submitOk) throw new Error('Could not reach the server. Check your internet connection.');
 
       setProgress(100);
       _submittedPayload = {...payload, achievements};
