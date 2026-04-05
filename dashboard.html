@@ -198,7 +198,7 @@
 </div>
 
 <script>
-  const EXEC_URL = "https://script.google.com/macros/s/AKfycbyCYh9pxMthHwJkM-WbxF1GQUcFJS38AcpCrE9sta02RG0jemyJUcJwRd-UYXeMaAZCXQ/exec";
+  const EXEC_URL = "https://script.google.com/macros/s/AKfycbz3lDrvyrHP6ZGYzkjUoLaXH-6jhrzrZ98fUhgX4O55pS3aATY0TvxkZP6mlHh5SFwqxg/exec";
 
   let allData   = [];
   let filtered  = [];
@@ -226,8 +226,8 @@
         throw new Error("Apps Script returned non-JSON. Please redeploy the script as a new version.");
       }
 
-      if (json.status === "ok" && json.app && !json.data) {
-        // Old doGet — no data endpoint yet
+      // If the response has 'app' but no 'data' key at all, the old doGet is running
+      if (json.status === "ok" && json.app && !('data' in json)) {
         throw new Error("OLD_SCRIPT");
       }
       if (json.status !== "ok") throw new Error(json.message || "Unknown error from Apps Script");
