@@ -291,7 +291,7 @@
 </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBG5gejFcgKjrbNp9kCtbpZWaVgAOvGA-UpaVEDjJOBi0W0LLvS1e_5awZCglXoQ87/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVUNi8IiRJeiPpGp9Zxj0MgVQ3WLSYFpMQR1LCVElNL-INBYw2eXkcY-RZXLWHtLUt/exec";
 
   const REPRESENTATIONS = [
     "School Representation","Zonal","District","State",
@@ -512,46 +512,53 @@
         gameRanking:document.getElementById('gameRanking').value.trim(),
         achievements
       };
-      btn.textContent='Submitting to Google Sheets…'; setProgress(65);
+      btn.textContent='Submitting…'; setProgress(65);
 
-      // Send as text/plain — this is a "simple" CORS request (no preflight).
-      // Apps Script receives the JSON body in e.postData.contents.
-      // We generate the reference ID locally so we don't depend on reading
-      // the response (which can be blocked on some redirect paths).
-      const localId = 'GNC-' + Date.now();
+      // Strip certificate data — too large for a URL parameter.
+      // Core form data + achievements (without files) are sent via JSONP GET.
+      // JSONP completely bypasses CORS — same technique used by the dashboard.
+      const payloadForSend = {
+        ...payload,
+        achievements: (payload.achievements || []).map(a => ({
+          representation: a.representation,
+          eventName:      a.eventName,
+          standing:       a.standing,
+          year:           a.year
+        }))
+      };
 
-      let submitOk = false;
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method:  'POST',
-          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-          body:    JSON.stringify(payload)
-        });
-        // Try reading the response — works when CORS headers come back fine
-        try {
-          const result = await res.json();
-          submitOk = (result.status === 'success' || result.status === 'ok');
-        } catch {
-          // Response unreadable (opaque redirect) but request reached the server
-          submitOk = res.ok || res.type === 'opaque' || res.status === 0 || res.status === 200;
+      const result = await new Promise((resolve, reject) => {
+        const cbName = 'gnc_sub_' + Date.now();
+        const script = document.createElement('script');
+        const timer  = setTimeout(() => {
+          reject(new Error('Request timed out — check your internet connection'));
+          cleanup();
+        }, 20000);
+
+        function cleanup() {
+          delete window[cbName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          clearTimeout(timer);
         }
-      } catch (fetchErr) {
-        // "Failed to fetch" on the response side still means the POST was sent
-        // when the error is CORS-related (happens after the server receives it)
-        submitOk = fetchErr.message.includes('Failed to fetch') ||
-                   fetchErr.message.includes('NetworkError') ||
-                   fetchErr.name === 'TypeError';
-      }
 
-      if (!submitOk) throw new Error('Could not reach the server. Check your internet connection.');
+        window[cbName] = function(data) { resolve(data); cleanup(); };
+        script.onerror  = function()    { reject(new Error('Could not reach the server')); cleanup(); };
+
+        const qs = 'action=submit&data=' + encodeURIComponent(JSON.stringify(payloadForSend)) + '&callback=' + cbName;
+        script.src = SCRIPT_URL + '?' + qs;
+        document.head.appendChild(script);
+      });
+
+      if (result.status !== 'success') throw new Error(result.message || 'Submission failed');
 
       setProgress(100);
+      const refId = result.id || ('GNC-' + Date.now());
       _submittedPayload = {...payload, achievements};
-      _submittedId = localId;
+      _submittedId = refId;
       setTimeout(()=>{
         document.getElementById('mainForm').style.display='none';
         bar.style.display='none';
-        document.getElementById('successId').textContent='Reference ID: '+localId;
+        document.getElementById('successId').textContent='Reference ID: ' + refId;
         const b=document.getElementById('successBanner');
         b.style.display='block';
         b.scrollIntoView({behavior:'smooth'});
