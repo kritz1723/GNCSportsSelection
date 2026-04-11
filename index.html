@@ -286,12 +286,12 @@
       </button>
     </div>
   </div>
-  <div class="error-banner" id="errorBanner">Submission failed. Please check your connection and try again.</div>
+  <div class="error-banner" id="errorBanner"><span id="errorMsg">Submission failed. Please check your connection and try again.</span></div>
 
 </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbS3EUDjkieZAaIIoQvMh3tDDhWqTNA-OK2_nMlNr8JZIm7IHKZgfwYuQONpE1SDCE/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVS-e_xcy0QapYf0ezk3L0uUbDJe2Kwlv0kztpxf5gwZobo3ShGbIz7L0aUqE1L30Y/exec";
 
   const REPRESENTATIONS = [
     "School Representation","Zonal","District","State",
@@ -421,8 +421,18 @@
   }
 
   function clearRowErr(el) {
-    el.style.borderColor=''; el.style.background='';
-    const row = el.closest('.ach-row'); if(row) row.classList.remove('row-error');
+    el.style.borderColor='';
+    el.style.background='';
+    el.style.removeProperty('border-color');
+    el.style.removeProperty('background');
+    const row = el.closest('.ach-row');
+    if(row){
+      row.classList.remove('row-error');
+      // Reset all errored fields in this row
+      row.querySelectorAll('select,input,textarea').forEach(function(f){
+        f.style.borderColor=''; f.style.background='';
+      });
+    }
   }
 
   function autoResize(ta) { ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
@@ -514,26 +524,35 @@
       };
       btn.textContent='Submitting…'; setProgress(65);
 
-      // Strip certificate data — too large for a URL parameter.
-      // Core form data + achievements (without files) are sent via JSONP GET.
-      // JSONP completely bypasses CORS — same technique used by the dashboard.
+      // Build lean payload — strip certificate binary data (too large for URL)
       const payloadForSend = {
-        ...payload,
+        name:        payload.name,
+        dob:         payload.dob,
+        gender:      payload.gender,
+        contact:     payload.contact,
+        email:       payload.email,
+        school:      payload.school,
+        board:       payload.board,
+        game:        payload.game,
+        gameLevel:   payload.gameLevel,
+        gameRanking: payload.gameRanking,
         achievements: (payload.achievements || []).map(a => ({
-          representation: a.representation,
-          eventName:      a.eventName,
-          standing:       a.standing,
-          year:           a.year
+          representation: a.representation || '',
+          eventName:      a.eventName      || '',
+          standing:       a.standing       || '',
+          year:           String(a.year    || '')
         }))
       };
 
-      const result = await new Promise((resolve, reject) => {
+      // JSONP submission — zero CORS issues (same method as dashboard)
+      const jsonStr = JSON.stringify(payloadForSend);
+      const result  = await new Promise((resolve, reject) => {
         const cbName = 'gnc_sub_' + Date.now();
         const script = document.createElement('script');
         const timer  = setTimeout(() => {
-          reject(new Error('Request timed out — check your internet connection'));
+          reject(new Error('Timed out after 25s. Check your internet and try again.'));
           cleanup();
-        }, 20000);
+        }, 25000);
 
         function cleanup() {
           delete window[cbName];
@@ -542,14 +561,21 @@
         }
 
         window[cbName] = function(data) { resolve(data); cleanup(); };
-        script.onerror  = function()    { reject(new Error('Could not reach the server')); cleanup(); };
+        script.onerror = function(e)    {
+          reject(new Error('Could not connect to the server. Check internet connection.'));
+          cleanup();
+        };
 
-        const qs = 'action=submit&data=' + encodeURIComponent(JSON.stringify(payloadForSend)) + '&callback=' + cbName;
-        script.src = SCRIPT_URL + '?' + qs;
+        // Build URL — encodeURIComponent handles all special chars safely
+        const encoded = encodeURIComponent(jsonStr);
+        script.src = SCRIPT_URL + '?action=submit&data=' + encoded + '&callback=' + cbName;
+        script.async = true;
         document.head.appendChild(script);
       });
 
-      if (result.status !== 'success') throw new Error(result.message || 'Submission failed');
+      if (!result || result.status !== 'success') {
+        throw new Error(result ? (result.message || 'Server returned an error') : 'No response from server');
+      }
 
       setProgress(100);
       const refId = result.id || ('GNC-' + Date.now());
@@ -563,9 +589,17 @@
         b.style.display='block';
         b.scrollIntoView({behavior:'smooth'});
       }, 400);
+
     }catch(err){
-      console.error(err);bar.style.display='none';btn.disabled=false;btn.textContent='Submit Application';
-      const eb=document.getElementById('errorBanner');eb.style.display='block';eb.scrollIntoView({behavior:'smooth'});
+      console.error('Submission error:', err);
+      bar.style.display='none';
+      btn.disabled=false;
+      btn.textContent='Submit Application';
+      const eb=document.getElementById('errorBanner');
+      const em=document.getElementById('errorMsg');
+      if(em) em.textContent = err.message || 'Submission failed. Please try again.';
+      eb.style.display='block';
+      eb.scrollIntoView({behavior:'smooth'});
     }
   }
 
